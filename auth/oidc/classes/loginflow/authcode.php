@@ -45,14 +45,16 @@ require_once($CFG->dirroot . '/user/lib.php');
 /**
  * Login flow for the oauth2 authorization code grant.
  */
-class authcode extends base {
+class authcode extends base
+{
     /**
      * Returns a list of potential IdPs that this authentication plugin supports. Used to provide links on the login page.
      *
      * @param string $wantsurl The relative url fragment the user wants to get to.
      * @return array Array of IdPs.
      */
-    public function loginpage_idp_list($wantsurl) {
+    public function loginpage_idp_list($wantsurl)
+    {
         if (!auth_oidc_is_setup_complete()) {
             return [];
         }
@@ -89,7 +91,8 @@ class authcode extends base {
      * @param string $fallback The fallback value.
      * @return string The parameter value, or fallback.
      */
-    protected function getoidcparam($name, $fallback = '') {
+    protected function getoidcparam($name, $fallback = '')
+    {
         $val = optional_param($name, $fallback, PARAM_RAW);
         $val = trim($val);
         $valclean = preg_replace('/[^A-Za-z0-9\_\-\.\+\/\=]/i', '', $val);
@@ -105,7 +108,8 @@ class authcode extends base {
      *
      * @return mixed Determined by loginflow.
      */
-    public function handleredirect() {
+    public function handleredirect()
+    {
         global $CFG, $SESSION;
 
         $error = optional_param('error', '', PARAM_TEXT);
@@ -187,7 +191,8 @@ class authcode extends base {
      * @param string $password The password (with system magic quotes)
      * @return bool Authentication success or failure.
      */
-    public function user_login($username, $password = null) {
+    public function user_login($username, $password = null)
+    {
         global $CFG, $DB;
 
         // Check user exists.
@@ -209,8 +214,12 @@ class authcode extends base {
      * @param array $extraparams Additional parameters to send with the OIDC request.
      * @param bool $selectaccount Whether to prompt the user to select an account.
      */
-    public function initiateauthrequest($promptlogin = false, array $stateparams = array(), array $extraparams = array(),
-        bool $selectaccount = false) {
+    public function initiateauthrequest(
+        $promptlogin = false,
+        array $stateparams = array(),
+        array $extraparams = array(),
+        bool $selectaccount = false
+    ) {
         $client = $this->get_oidcclient();
         $client->authrequest($promptlogin, $stateparams, $extraparams, $selectaccount);
     }
@@ -222,7 +231,8 @@ class authcode extends base {
      * @param array $extraparams
      * @return void
      */
-    public function initiateadminconsentrequest(array $stateparams = [], array $extraparams = []) {
+    public function initiateadminconsentrequest(array $stateparams = [], array $extraparams = [])
+    {
         $client = $this->get_oidcclient();
         $client->adminconsentrequest($stateparams, $extraparams);
     }
@@ -232,7 +242,8 @@ class authcode extends base {
      * @return void
      * @throws moodle_exception
      */
-    protected function handlecertadminconsentresponse(array $authparams) {
+    protected function handlecertadminconsentresponse(array $authparams)
+    {
         global $CFG, $DB, $SESSION;
 
         if (!empty($authparams['error_description'])) {
@@ -288,7 +299,8 @@ class authcode extends base {
      *
      * @param array $authparams Received parameters.
      */
-    protected function handleauthresponse(array $authparams) {
+    protected function handleauthresponse(array $authparams)
+    {
         global $DB, $SESSION, $USER, $CFG;
 
         $sid = optional_param('session_state', '', PARAM_TEXT);
@@ -373,17 +385,19 @@ class authcode extends base {
                     $upn = $idtoken->claim('unique_name');
                 }
             }
-            $userrec = $DB->count_records_sql('SELECT COUNT(*)
+            $userrec = $DB->count_records_sql(
+                'SELECT COUNT(*)
                                                  FROM {user}
                                                 WHERE username = ?
                                                       AND id != ?',
-                    [$upn, $USER->id]);
+                [$upn, $USER->id]
+            );
 
             if (!empty($userrec)) {
                 if (empty($additionaldata['redirect'])) {
                     $redirect = '/auth/oidc/ucp.php?o365accountconnected=true';
                 } else if ($additionaldata['redirect'] == '/local/o365/ucp.php') {
-                    $redirect = $additionaldata['redirect'].'?action=connection&o365accountconnected=true';
+                    $redirect = $additionaldata['redirect'] . '?action=connection&o365accountconnected=true';
                 } else {
                     throw new moodle_exception('errorinvalidredirect_message', 'auth_oidc');
                 }
@@ -417,7 +431,8 @@ class authcode extends base {
      * @param jwt $idtoken A JWT object representing the received id_token.
      * @param bool $connectiononly Whether to just connect the user (true), or to connect and change login method (false).
      */
-    protected function handlemigration($oidcuniqid, $authparams, $tokenparams, $idtoken, $connectiononly = false) {
+    protected function handlemigration($oidcuniqid, $authparams, $tokenparams, $idtoken, $connectiononly = false)
+    {
         global $USER, $DB, $CFG;
 
         // Check if OIDC user is already connected to a Moodle user.
@@ -506,7 +521,8 @@ class authcode extends base {
      * @param $entraidupn
      * @return false|stdClass Either the matched Moodle user record, or false if not matched.
      */
-    protected function check_for_matched($entraidupn) {
+    protected function check_for_matched($entraidupn)
+    {
         global $DB;
 
         if (auth_oidc_is_local_365_installed()) {
@@ -526,7 +542,8 @@ class authcode extends base {
      * @return string If there is an existing user object, return the username associated with it.
      *                If there is no existing user object, return the original username.
      */
-    protected function check_objects($oidcuniqid, $username) {
+    protected function check_objects($oidcuniqid, $username)
+    {
         global $DB;
 
         $user = null;
@@ -550,7 +567,8 @@ class authcode extends base {
      * @param array $tokenparams Parameters received from the token request.
      * @param jwt $idtoken A JWT object representing the received id_token.
      */
-    protected function handlelogin(string $oidcuniqid, array $authparams, array $tokenparams, jwt $idtoken) {
+    protected function handlelogin(string $oidcuniqid, array $authparams, array $tokenparams, jwt $idtoken)
+    {
         global $DB, $CFG;
 
         $tokenrec = $DB->get_record('auth_oidc_token', ['oidcuniqid' => $oidcuniqid]);
@@ -586,9 +604,17 @@ class authcode extends base {
         if (auth_oidc_is_local_365_installed()) {
             if ($existingmatching = $DB->get_record('local_o365_objects', ['type' => 'user', 'objectid' => $oidcuniqid])) {
                 $existinguser = core_user::get_user($existingmatching->moodleid);
-                if ($existinguser && strtolower($existingmatching->o365name) != strtolower($oidcusername) &&
-                    $existinguser->username != strtolower($oidcusername)) {
-                    $usernamechanged = true;
+                if (
+                    $existinguser && strtolower($existingmatching->o365name) != strtolower($oidcusername) &&
+                    $existinguser->username != strtolower($oidcusername)
+                ) {
+                    // PATCH - refs #2685838
+                    // The tokenrec->oidcusername will never match the idtoken->upn,
+                    // so never try to update it (leave $usernamechanged == false).
+                    if (getenv('O365_ENABLE_EIN_PATCH') !== false) {
+                    } else {
+                        $usernamechanged = true;
+                    }
                 }
             }
         }
@@ -651,8 +677,10 @@ class authcode extends base {
 
                             $fullmessage = 'Attempt to change username of user ' . $user->id . ' from ' .
                                 $tokenrec->oidcusername . ' to ' . strtolower($oidcusername);
-                            $event = user_rename_attempt::create(['objectid' => $user->id, 'other' => $fullmessage,
-                                'userid' => $user->id]);
+                            $event = user_rename_attempt::create([
+                                'objectid' => $user->id, 'other' => $fullmessage,
+                                'userid' => $user->id
+                            ]);
                             $event->trigger();
 
                             $tokenrec->username = strtolower($oidcusername);
@@ -664,8 +692,10 @@ class authcode extends base {
 
                     // Update local_o365_objects table.
                     if (auth_oidc_is_local_365_installed()) {
-                        if ($o365objectrecord = $DB->get_record('local_o365_objects',
-                            ['moodleid' => $user->id, 'type' => 'user'])) {
+                        if ($o365objectrecord = $DB->get_record(
+                            'local_o365_objects',
+                            ['moodleid' => $user->id, 'type' => 'user']
+                        )) {
                             $o365objectrecord->o365name = $oidcusername;
                             $DB->update_record('local_o365_objects', $o365objectrecord);
                         }
@@ -715,8 +745,10 @@ class authcode extends base {
                 if (auth_oidc_is_local_365_installed()) {
                     $apiclient = \local_o365\utils::get_api();
                     $userdetails = $apiclient->get_user($oidcuniqid);
-                    if (!is_null($userdetails) && isset($userdetails['userPrincipalName']) &&
-                        stripos($userdetails['userPrincipalName'], '#EXT#') !== false && $idtoken->claim('unique_name')) {
+                    if (
+                        !is_null($userdetails) && isset($userdetails['userPrincipalName']) &&
+                        stripos($userdetails['userPrincipalName'], '#EXT#') !== false && $idtoken->claim('unique_name')
+                    ) {
                         $originalupn = $userdetails['userPrincipalName'];
                         $username = $idtoken->claim('unique_name');
                     }
@@ -737,8 +769,10 @@ class authcode extends base {
                 $fullmessage =
                     'Attempt to change username of user ' . $existinguser->id . ' from ' . $originalusername . ' to ' .
                     $username;
-                $event = user_rename_attempt::create(['objectid' => $existinguser->id, 'other' => $fullmessage,
-                    'userid' => $existinguser->id]);
+                $event = user_rename_attempt::create([
+                    'objectid' => $existinguser->id, 'other' => $fullmessage,
+                    'userid' => $existinguser->id
+                ]);
                 $event->trigger();
             }
 
@@ -785,8 +819,10 @@ class authcode extends base {
                 if (auth_oidc_is_local_365_installed()) {
                     $apiclient = \local_o365\utils::get_api();
                     $userdetails = $apiclient->get_user($oidcuniqid, true);
-                    if (!is_null($userdetails) && isset($userdetails['userPrincipalName']) &&
-                        stripos($userdetails['userPrincipalName'], '#EXT#') !== false && $idtoken->claim('unique_name')) {
+                    if (
+                        !is_null($userdetails) && isset($userdetails['userPrincipalName']) &&
+                        stripos($userdetails['userPrincipalName'], '#EXT#') !== false && $idtoken->claim('unique_name')
+                    ) {
                         $originalupn = $userdetails['userPrincipalName'];
                         $username = $idtoken->claim('unique_name');
                     }
@@ -846,7 +882,6 @@ class authcode extends base {
 
                 redirect($CFG->wwwroot, get_string('errorauthgeneral', 'auth_oidc'), null, notification::NOTIFY_ERROR);
             }
-
         }
         return true;
     }
