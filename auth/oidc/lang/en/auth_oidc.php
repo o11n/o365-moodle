@@ -202,6 +202,7 @@ $string['application_updated_microsoft'] = 'OpenID Connect application setting w
 $string['application_not_changed'] = 'OpenID Connect application setting was not changed.';
 
 $string['event_debug'] = 'Debug message';
+$string['eventaccountcreated'] = 'Creating account';
 
 $string['task_cleanup_oidc_state_and_token'] = 'Clean up OIDC state and invalid token';
 
